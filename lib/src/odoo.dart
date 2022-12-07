@@ -37,31 +37,31 @@ abstract class IConnection {
 }
 
 class SessionController {
-  final Dio _dio;
+  final Dio dio;
   final _controller = StreamController<Session?>();
   Stream<Session?> get stream => _controller.stream;
 
-  SessionController(this._dio);
+  SessionController(this.dio);
 
   void update(Session? session) {
-    _dio.options.headers["Cookie"] = "session_id=${session?.id}";
+    dio.options.headers["Cookie"] = "session_id=${session?.id}";
     _controller.add(session);
   }
 }
 
 class Odoo implements IDatabaseOperation, IConnection {
   final Connection connection;
-  late final Dio _dio;
+  late final Dio dio;
   late final SessionController session;
 
   Odoo(this.connection) {
-    this._dio = Dio(BaseOptions(baseUrl: connection.url.toString()));
-    this.session = SessionController(_dio);
+    this.dio = Dio(BaseOptions(baseUrl: connection.url.toString()));
+    this.session = SessionController(dio);
   }
 
   Future<UserLoggedIn> connect(Credential credential) async {
     try {
-      Response resp = await _dio.post("/web/session/authenticate",
+      Response resp = await dio.post("/web/session/authenticate",
           data: _withDefaultParams({
             "db": connection.db,
             "login": credential.username,
@@ -71,11 +71,12 @@ class Odoo implements IDatabaseOperation, IConnection {
       Map<String, dynamic> _resp = _transformResponse(resp);
 
       String sessionId = _getSessionId(resp.headers['set-cookie']!.first);
+      _resp["session_id"] = sessionId;
       UserLoggedIn _user = UserLoggedIn.fromJson(_resp);
 
       session.update(Session(sessionId, _user));
 
-      return UserLoggedIn.fromJson(_resp);
+      return _user;
     } catch (e) {
       throw e;
     }
@@ -95,7 +96,7 @@ class Odoo implements IDatabaseOperation, IConnection {
         _method = "read";
       }
 
-      Response resp = await _dio.post("/web/dataset/call_kw",
+      Response resp = await dio.post("/web/dataset/call_kw",
           data: _withDefaultParams({
             "args": args,
             "kwargs": {"context": {}},
@@ -155,7 +156,7 @@ class Odoo implements IDatabaseOperation, IConnection {
       bool count = false,
       int limit = 50}) async {
     final resp =
-        _transformResponseQuery(await _dio.post("/web/dataset/search_read",
+        _transformResponseQuery(await dio.post("/web/dataset/search_read",
             data: _withDefaultParams({
               "context": {},
               "domain": where,
