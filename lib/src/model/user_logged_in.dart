@@ -17,18 +17,21 @@ class UserLoggedIn {
   final String username;
   final UserCompanies user_companies;
   final Map<String, dynamic> currencies;
+  final String sessionId;
 
-  UserLoggedIn(
-      {required this.uid,
-      required this.is_system,
-      required this.is_admin,
-      required this.user_context,
-      required this.db,
-      required this.server_version,
-      required this.name,
-      required this.username,
-      required this.user_companies,
-      required this.currencies});
+  UserLoggedIn({
+    required this.uid,
+    required this.is_system,
+    required this.is_admin,
+    required this.user_context,
+    required this.db,
+    required this.server_version,
+    required this.name,
+    required this.username,
+    required this.user_companies,
+    required this.currencies,
+    this.sessionId = "",
+  });
   factory UserLoggedIn.fromJson(Map<String, dynamic> json) =>
       _$UserLoggedInFromJson(json);
   Map<String, dynamic> toJson() => _$UserLoggedInToJson(this);
