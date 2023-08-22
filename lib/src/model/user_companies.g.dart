@@ -8,10 +8,8 @@ part of 'user_companies.dart';
 
 UserCompanies _$UserCompaniesFromJson(Map<String, dynamic> json) {
   return UserCompanies(
-    current_company: json['current_company'] as List<dynamic>,
-    allowed_companies: (json['allowed_companies'] as List<dynamic>)
-        .map((e) => e as List<dynamic>)
-        .toList(),
+    current_company: json['current_company'] as int,
+    allowed_companies: json['allowed_companies'] as Map<String, dynamic>,
   );
 }
 
