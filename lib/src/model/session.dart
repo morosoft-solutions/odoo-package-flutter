@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+
 import 'user_logged_in.dart';
 
 part 'session.g.dart';
@@ -7,8 +8,9 @@ part 'session.g.dart';
 class Session {
   final String id;
   final UserLoggedIn user;
+  final DateTime expirationDate;
 
-  Session(this.id, this.user);
+  Session(this.id, this.user, this.expirationDate);
 
   factory Session.fromJson(Map<String, dynamic> json) =>
       _$SessionFromJson(json);

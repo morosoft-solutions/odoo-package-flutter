@@ -2,13 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'model/connection.dart';
-import 'model/credential.dart';
-import 'model/user_logged_in.dart';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
+import 'model/connection.dart';
+import 'model/credential.dart';
 import 'model/session.dart';
+import 'model/user_logged_in.dart';
 
 enum _OdooMethod { create, read, update, delete }
 
@@ -58,29 +59,49 @@ class Odoo implements IDatabaseOperation, IConnection {
     this.dio = Dio(BaseOptions(baseUrl: connection.url.toString()));
     this.session = SessionController(dio);
   }
-
+  
   Future<UserLoggedIn> connect(Credential credential) async {
-    try {
-      Response resp = await dio.post("/web/session/authenticate",
-          data: _withDefaultParams({
-            "db": connection.db,
-            "login": credential.username,
-            "password": credential.password
-          }));
+  try {
+    Response resp = await dio.post("/web/session/authenticate",
+        data: _withDefaultParams({
+          "db": connection.db,
+          "login": credential.username,
+          "password": credential.password
+        }));
 
-      Map<String, dynamic> _resp = _transformResponse(resp);
+    // Extraire les informations du cookie
+    String setCookieHeader = resp.headers['set-cookie']!.first;
+    print('Set-Cookie Header: ${resp.headers['set-cookie']}');
 
-      String sessionId = _getSessionId(resp.headers['set-cookie']!.first);
-      _resp["session_id"] = sessionId;
-      UserLoggedIn _user = UserLoggedIn.fromJson(_resp);
+    String sessionId = _getSessionId(setCookieHeader);
+    DateTime expirationDate = _getCookieExpirationDate(setCookieHeader);
 
-      session.update(Session(sessionId, _user));
 
-      return _user;
-    } catch (e) {
-      throw e;
+    Map<String, dynamic> _resp = _transformResponse(resp);
+    _resp["session_id"] = sessionId;
+
+    UserLoggedIn _user = UserLoggedIn.fromJson(_resp);
+    session.update(Session(sessionId, _user,expirationDate));
+
+    return _user;
+  } catch (e) {
+    throw e;
+  }
+}
+
+DateTime _getCookieExpirationDate(String setCookieHeader) {
+  final cookieKeyValuePairs = setCookieHeader.split('; ');
+  for (var pair in cookieKeyValuePairs) {
+    if (pair.startsWith('Expires=')) {
+      final expirationString = pair.substring('Expires='.length);
+      final dateFormat = DateFormat('EEE, dd-MMM-yyyy HH:mm:ss zzz', 'en_US');
+      return dateFormat.parse(expirationString);
     }
   }
+  // Si la date d'expiration n'est pas trouvée, retourner  une valeur par défaut 30 jours
+  return DateTime.now().add(Duration(days: 90)); 
+}
+
 
   Future<dynamic> _crud(String tableName, _OdooMethod method, dynamic args,
       [dynamic kwargs]) async {
