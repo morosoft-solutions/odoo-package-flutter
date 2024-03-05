@@ -10,10 +10,12 @@ Session _$SessionFromJson(Map<String, dynamic> json) {
   return Session(
     json['id'] as String,
     UserLoggedIn.fromJson(json['user'] as Map<String, dynamic>),
+    json['companyId'] as String,
   );
 }
 
 Map<String, dynamic> _$SessionToJson(Session instance) => <String, dynamic>{
       'id': instance.id,
       'user': instance.user.toJson(),
+      'companyId': instance.companyId,
     };

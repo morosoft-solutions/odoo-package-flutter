@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'model/connection.dart';
-import 'model/credential.dart';
-import 'model/user_logged_in.dart';
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
 
+import 'model/connection.dart';
+import 'model/credential.dart';
 import 'model/session.dart';
+import 'model/user_logged_in.dart';
 
 enum _OdooMethod { create, read, update, delete }
 
@@ -44,7 +44,7 @@ class SessionController {
   SessionController(this.dio);
 
   void update(Session? session) {
-    dio.options.headers["Cookie"] = "session_id=${session?.id}";
+    dio.options.headers["Cookie"] = "session_id=${session?.id}; cids=${session?.companyId}";
     _controller.add(session);
   }
 }
@@ -74,7 +74,7 @@ class Odoo implements IDatabaseOperation, IConnection {
       _resp["session_id"] = sessionId;
       UserLoggedIn _user = UserLoggedIn.fromJson(_resp);
 
-      session.update(Session(sessionId, _user));
+      session.update(Session(sessionId, _user,"${_user.user_companies.current_company}" ));
 
       return _user;
     } catch (e) {
