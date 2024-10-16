@@ -44,7 +44,8 @@ class SessionController {
   SessionController(this.dio);
 
   void update(Session? session) {
-    dio.options.headers["Cookie"] = "session_id=${session?.id}; cids=${session?.companyId}";
+    dio.options.headers["Cookie"] =
+        "session_id=${session?.id}; cids=${session?.companyId}";
     _controller.add(session);
   }
 }
@@ -74,7 +75,8 @@ class Odoo implements IDatabaseOperation, IConnection {
       _resp["session_id"] = sessionId;
       UserLoggedIn _user = UserLoggedIn.fromJson(_resp);
 
-      session.update(Session(sessionId, _user,"${_user.user_companies.current_company}" ));
+      session.update(
+          Session(sessionId, _user, "${_user.user_companies.current_company}"));
 
       return _user;
     } catch (e) {
@@ -147,18 +149,20 @@ class Odoo implements IDatabaseOperation, IConnection {
     return resp;
   }
 
-  Future<List<dynamic>> query(
-      {required String from,
-      List<String> select = const [],
-      List<dynamic> where = const [],
-      String orderBy = "",
-      int offset = 0,
-      bool count = false,
-      int limit = 50}) async {
+  Future<List<dynamic>> query({
+    required String from,
+    List<String> select = const [],
+    List<dynamic> where = const [],
+    String orderBy = "",
+    int offset = 0,
+    bool count = false,
+    int limit = 50,
+    dynamic context = const {},
+  }) async {
     final resp =
         _transformResponseQuery(await dio.post("/web/dataset/search_read",
             data: _withDefaultParams({
-              "context": {},
+              "context": context,
               "domain": where,
               "fields": select,
               "limit": limit,
