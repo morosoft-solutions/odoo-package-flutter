@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'model/connection.dart';
 import 'model/credential.dart';
@@ -54,6 +55,7 @@ class Odoo implements IDatabaseOperation, IConnection {
   final Connection connection;
   late final Dio dio;
   late final SessionController session;
+  UserLoggedIn? userLoggedIn;
 
   Odoo(this.connection) {
     this.dio = Dio(BaseOptions(baseUrl: connection.url.toString()));
@@ -77,7 +79,8 @@ class Odoo implements IDatabaseOperation, IConnection {
 
       session.update(
           Session(sessionId, _user, "${_user.user_companies.current_company}"));
-
+      userLoggedIn = _user;
+      setUserLoggedInToLocalStorage(_user);
       return _user;
     } catch (e) {
       throw e;
@@ -218,5 +221,31 @@ class Odoo implements IDatabaseOperation, IConnection {
 
   void disconnect() {
     session.update(null);
+    removeUserLoggedInFromLocalStorage();
+    userLoggedIn = null;
+  }
+
+  Future removeUserLoggedInFromLocalStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.remove("userLoggedIn");
+  }
+
+  Future setUserLoggedInFromLocalStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? prefsUserLoggedIn = prefs.getString("userLoggedIn");
+    if (prefsUserLoggedIn == null) {
+      return;
+    }
+    Map<String, dynamic> user = jsonDecode(prefsUserLoggedIn);
+    userLoggedIn = UserLoggedIn.fromJson(user);
+    session.update(Session(userLoggedIn!.sessionId, userLoggedIn!,
+        "${userLoggedIn!.user_companies.current_company}"));
+    dio.options.headers["Cookie"] =
+        "session_id=${userLoggedIn!.sessionId}; cids=${userLoggedIn!.user_companies.current_company}";
+  }
+
+  Future setUserLoggedInToLocalStorage(UserLoggedIn _user) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString("userLoggedIn", jsonEncode(_user.toJson()));
   }
 }
