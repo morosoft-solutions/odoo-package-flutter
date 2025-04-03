@@ -104,7 +104,11 @@ class Odoo implements IDatabaseOperation, IConnection {
       Response resp = await dio.post("/web/dataset/call_kw",
           data: _withDefaultParams({
             "args": args,
-            "kwargs": {"context": {}},
+            "kwargs": {
+              "context": {
+                ...userLoggedIn!.user_context.toJson(),
+              }
+            },
             "method": _method,
             "model": tableName
           }));
@@ -165,7 +169,10 @@ class Odoo implements IDatabaseOperation, IConnection {
     final resp =
         _transformResponseQuery(await dio.post("/web/dataset/search_read",
             data: _withDefaultParams({
-              "context": context,
+              "context": {
+                ...userLoggedIn!.user_context.toJson(),
+                ...context,
+              },
               "domain": where,
               "fields": select,
               "limit": limit,
