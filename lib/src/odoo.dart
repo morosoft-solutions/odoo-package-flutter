@@ -166,21 +166,23 @@ class Odoo implements IDatabaseOperation, IConnection {
     int limit = 50,
     dynamic context = const {},
   }) async {
-    final resp =
-        _transformResponseQuery(await dio.post("/web/dataset/search_read",
-            data: _withDefaultParams({
-              "context": {
-                ...userLoggedIn!.user_context.toJson(),
-                ...context,
-              },
-              "domain": where,
-              "fields": select,
-              "limit": limit,
-              "model": from,
-              "sort": orderBy,
-              "offset": offset,
-              "count": count
-            })));
+    final resp = _transformResponse(await dio.post("/web/dataset/call_kw",
+        data: _withDefaultParams({
+          "args": [],
+          "kwargs": {
+            "context": {
+              ...userLoggedIn!.user_context.toJson(),
+              ...context,
+            },
+            "domain": where,
+            "fields": select,
+            "limit": limit,
+            "order": orderBy,
+            "offset": offset,
+          },
+          "method": count ? "search_count" : "search_read",
+          "model": from,
+        })));
     return resp;
   }
 
@@ -208,6 +210,12 @@ class Odoo implements IDatabaseOperation, IConnection {
         throw Exception("Session expired");
       }
       throw Exception(_resp['error'].toString());
+    }
+
+    if (_resp.containsKey("length")) {
+      if (_resp["length"] == 0) {
+        return [];
+      }
     }
 
     return _resp['result'];
