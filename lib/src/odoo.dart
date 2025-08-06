@@ -73,7 +73,9 @@ class Odoo implements IDatabaseOperation, IConnection {
 
       Map<String, dynamic> _resp = _transformResponse(resp);
 
-      String sessionId = _getSessionId(resp.headers['set-cookie']!.first);
+      String sessionId = _getSessionId(resp.headers['set-cookie']!
+          .where((el) => el.startsWith("session_id"))
+          .first);
       _resp["session_id"] = sessionId;
       UserLoggedIn _user = UserLoggedIn.fromJson(_resp);
 
