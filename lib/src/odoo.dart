@@ -224,9 +224,11 @@ class Odoo implements IDatabaseOperation, IConnection {
   }
 
   Map<String, dynamic> _withDefaultParams(Map<String, dynamic> params) {
+    String db = connection.db;
     return {
       "id": _uuid.v4(),
       "jsonrpc": "2.0",
+      "exp_mobile_db": db,
       "method": "call",
       "params": params
     };
