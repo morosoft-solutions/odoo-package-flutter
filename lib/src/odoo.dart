@@ -168,20 +168,29 @@ class Odoo implements IDatabaseOperation, IConnection {
     int limit = 50,
     dynamic context = const {},
   }) async {
+    var kwargs = {
+      "context": {
+        ...userLoggedIn!.user_context.toJson(),
+        ...context,
+      },
+      "domain": where,
+    };
+    if (!count) {
+      kwargs["fields"] = select;
+      if (limit > 0) {
+        kwargs["limit"] = limit;
+      }
+      if (offset > 0) {
+        kwargs["offset"] = offset;
+      }
+      if (orderBy.isNotEmpty) {
+        kwargs["order"] = orderBy;
+      }
+    }
     final resp = _transformResponse(await dio.post("/web/dataset/call_kw",
         data: _withDefaultParams({
           "args": [],
-          "kwargs": {
-            "context": {
-              ...userLoggedIn!.user_context.toJson(),
-              ...context,
-            },
-            "domain": where,
-            "fields": select,
-            "limit": limit,
-            "order": orderBy,
-            "offset": offset,
-          },
+          "kwargs": kwargs,
           "method": count ? "search_count" : "search_read",
           "model": from,
         })));
