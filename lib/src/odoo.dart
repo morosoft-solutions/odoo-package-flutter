@@ -194,7 +194,7 @@ class Odoo implements IDatabaseOperation, IConnection {
           "method": count ? "search_count" : "search_read",
           "model": from,
         })));
-    return resp;
+    return count ? [resp] : resp;
   }
 
   List _transformResponseQuery(Response resp) {
